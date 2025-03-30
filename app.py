@@ -36,7 +36,7 @@ if st.button("🔍 Buscar e processar informes"):
         cnpj_clean = cnpj_input.replace(".", "").replace("/", "").replace("-", "")
         df_filtrado = df_csv[
             (df_csv['CNPJ_FUNDO'].str.replace(r'\D', '', regex=True) == cnpj_clean) &
-            (df_csv['DESCRICAO'].str.contains("Informe Mensal", case=False, na=False)) &
+            (df_csv['TP_DOC'].str.contains("Informe Mensal", case=False, na=False)) &
             (df_csv['LINK_DOCUMENTO'].str.endswith(".xml", na=False))
         ]
 
