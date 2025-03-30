@@ -4,6 +4,10 @@ import requests
 from bs4 import BeautifulSoup
 import os
 from xml.etree import ElementTree as ET
+import urllib3
+
+# Desabilita os avisos de SSL
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def importar_e_exibir_xml(conteudo_xml):
     try:
@@ -25,7 +29,7 @@ def importar_e_exibir_xml(conteudo_xml):
 
 def buscar_links_informes(cnpj):
     url = f"https://fnet.bmfbovespa.com.br/fnet/publico/abrirGerenciadorDocumentosCVM?cnpjFundo={cnpj}"
-    response = requests.get(url)
+    response = requests.get(url, verify=False)  # Desativa a verificação SSL
     soup = BeautifulSoup(response.text, "html.parser")
 
     links = []
