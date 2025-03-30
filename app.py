@@ -6,8 +6,8 @@ from io import BytesIO
 
 # Função para buscar documentos via API da B3
 def buscar_documentos(cnpj):
-    cnpj_limpo = cnpj.replace(".", "").replace("/", "").replace("-", "")
-    url = f"https://fnet.bmfbovespa.com.br/fnet/publico/listarDocumentos?palavraChave=&codigoTipoFundo=&cnpj={cnpj_limpo}&idTipoDocumento=14"
+    cnpj_limpo = cnpj
+    url = f"https://fnet.bmfbovespa.com.br/fnet/publico/listarDocumentos?palavraChave=&codigoTipoFundo=&cnpj={cnpj_limpo}"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
     }
