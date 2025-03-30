@@ -1,19 +1,27 @@
 import streamlit as st
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
-import os
-from xml.etree import ElementTree as ET
-import urllib3
+import xml.etree.ElementTree as ET
+from io import BytesIO
 
-# Desabilita os avisos de SSL
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# Função para buscar documentos via API da B3
+def buscar_documentos(cnpj):
+    cnpj_limpo = cnpj.replace(".", "").replace("/", "").replace("-", "")
+    url = f"https://fnet.bmfbovespa.com.br/fnet/publico/listarDocumentos?palavraChave=&codigoTipoFundo=&cnpj={cnpj_limpo}&idTipoDocumento=14"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        documentos = data.get("documentos", [])
+        return documentos
+    else:
+        return []
 
-def importar_e_exibir_xml(conteudo_xml):
+# Função para importar e processar XML
+def importar_e_exibir_xml(xml_bytes):
     try:
-        df = pd.read_xml(conteudo_xml)
+        df = pd.read_xml(BytesIO(xml_bytes))
         try:
-            root = ET.fromstring(conteudo_xml)
+            root = ET.fromstring(xml_bytes)
             data_referencia = None
             for elem in root.iter():
                 if "DataReferencia" in elem.tag:
@@ -27,56 +35,46 @@ def importar_e_exibir_xml(conteudo_xml):
     except:
         return None
 
-def buscar_links_informes(cnpj):
-    url = f"https://fnet.bmfbovespa.com.br/fnet/publico/abrirGerenciadorDocumentosCVM?cnpjFundo={cnpj}"
-    response = requests.get(url, verify=False)  # Desativa a verificação SSL
-    soup = BeautifulSoup(response.text, "html.parser")
+# === Interface Streamlit ===
+st.set_page_config(page_title="Importador de Informes CVM", layout="wide")
+st.title("📄 Importador de Informes Mensais da CVM")
 
-    links = []
-    rows = soup.select("table tbody tr")
-    for row in rows:
-        cols = row.find_all("td")
-        if len(cols) >= 4:
-            tipo = cols[0].get_text(strip=True)
-            nome = cols[2].get_text(strip=True)
-            a = cols[3].find("a")
-            href = a["href"] if a else ""
-            if "Informe Mensal" in tipo and href.endswith(".xml"):
-                links.append({"nome": nome, "link": href})
-    return links
+cnpj_input = st.text_input("Digite o CNPJ do fundo:", "20.905.862/0001-70")
 
-st.title("📄 Importador de Informes Mensais - CVM")
-
-cnpj = st.text_input("Digite o CNPJ do fundo:", "20.905.862/0001-70")
-
-if st.button("Buscar e processar"):
+if st.button("🔍 Buscar e processar informes"):
     with st.spinner("Buscando documentos..."):
-        links = buscar_links_informes(cnpj)
-        if not links:
-            st.warning("Nenhum informe mensal encontrado.")
+        docs = buscar_documentos(cnpj_input)
+
+        if not docs:
+            st.warning("Nenhum informe mensal encontrado para esse CNPJ.")
         else:
+            st.success(f"{len(docs)} documentos encontrados.")
             dfs = []
-            for item in links:
-                r = requests.get(item["link"])
-                df = importar_e_exibir_xml(r.content)
-                if df is not None:
-                    df["Arquivo"] = item["nome"]
-                    dfs.append(df)
+
+            for doc in docs:
+                nome = doc.get("nomeArquivo", "documento.xml")
+                url = doc.get("url")
+                if url and url.endswith(".xml"):
+                    r = requests.get(url)
+                    df = importar_e_exibir_xml(r.content)
+                    if df is not None:
+                        df["Arquivo"] = nome
+                        dfs.append(df)
 
             if dfs:
                 df_final = pd.concat(dfs, ignore_index=True)
-                if "DataReferencia" in df_final.columns:
-                    cols = df_final.columns.tolist()
+
+                # Reorganizar colunas se "DataReferencia" estiver presente
+                cols = df_final.columns.tolist()
+                if "DataReferencia" in cols:
                     cols = ["DataReferencia", "Arquivo"] + [c for c in cols if c not in ("DataReferencia", "Arquivo")]
                     df_final = df_final[cols]
 
-                st.success("Informes processados com sucesso!")
                 st.dataframe(df_final)
 
-                # Baixar como Excel
-                excel_file = "informes_cvm.xlsx"
-                df_final.to_excel(excel_file, index=False)
-                with open(excel_file, "rb") as f:
-                    st.download_button("📥 Baixar Excel", f, file_name=excel_file)
+                # Exportar para Excel
+                output = BytesIO()
+                df_final.to_excel(output, index=False, engine="openpyxl")
+                st.download_button("📥 Baixar Excel", data=output.getvalue(), file_name="informes_cvm.xlsx")
             else:
-                st.error("Erro ao processar os arquivos XML.")
+                st.warning("Nenhum XML válido foi processado.")
