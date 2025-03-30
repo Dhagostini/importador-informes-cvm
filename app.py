@@ -8,13 +8,17 @@ from io import BytesIO
 def buscar_documentos(cnpj):
     cnpj_limpo = cnpj.replace(".", "").replace("/", "").replace("-", "")
     url = f"https://fnet.bmfbovespa.com.br/fnet/publico/listarDocumentos?palavraChave=&codigoTipoFundo=&cnpj={cnpj_limpo}&idTipoDocumento=14"
-    response = requests.get(url)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
         documentos = data.get("documentos", [])
         return documentos
     else:
         return []
+
 
 # Função para importar e processar XML
 def importar_e_exibir_xml(xml_bytes):
