@@ -1,7 +1,6 @@
 import streamlit as st
 import xml.etree.ElementTree as ET
 import pandas as pd
-from io import StringIO
 
 # Função para processar o XML e extrair dados
 def parse_xml(file):
@@ -19,7 +18,7 @@ def parse_xml(file):
 # App Streamlit
 st.title("Importar e Exibir XML")
 
-# Estilo HTML customizado
+# Estilo HTML customizado para organização visual
 html_styles = """
     <style>
         .header {
@@ -34,40 +33,30 @@ html_styles = """
             color: #333;
             margin-top: 30px;
         }
-        .data-table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        .data-table th, .data-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .data-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
+        .description {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
         }
     </style>
 """
 st.markdown(html_styles, unsafe_allow_html=True)
 
+# Adiciona o cabeçalho do aplicativo com HTML
 st.markdown("<div class='header'>Faça o upload de um arquivo XML para visualizar seus dados estruturados:</div>", unsafe_allow_html=True)
 
 # Upload do arquivo XML
 uploaded_file = st.file_uploader("Escolha um arquivo XML", type="xml")
 
 if uploaded_file is not None:
-    # Carregar o conteúdo do XML
+    # Cabeçalho indicando que o arquivo foi carregado com sucesso
     st.markdown("<div class='section'>Arquivo carregado com sucesso!</div>", unsafe_allow_html=True)
     
-    # Converte o arquivo para um DataFrame e exibe
+    # Converte o arquivo XML em um DataFrame
     df = parse_xml(uploaded_file)
     
-    # Exibe a tabela com estilo HTML
-    st.markdown("<div class='section'>Dados extraídos do XML:</div>", unsafe_allow_html=True)
+    # Exibe a descrição dos dados extraídos do XML
+    st.markdown("<div class='description'>Abaixo estão os dados extraídos do arquivo XML:</div>", unsafe_allow_html=True)
     
-    # Transformando o DataFrame para HTML e exibindo com a formatação da tabela
-    table_html = df.to_html(classes='data-table', index=False)
-    st.markdown(table_html, unsafe_allow_html=True)
-
+    # Exibe a tabela com o formato simples
+    st.dataframe(df)
