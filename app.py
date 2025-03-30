@@ -47,7 +47,7 @@ if st.button("🔍 Buscar e processar informes"):
         dfs = []
 
         for _, row in df_filtrado.iterrows():
-            link = row["LINK_DOCUMENTO"]
+            link = row["LINK_ARQ"]
             nome = row["NOME_DOCUMENTO"]
             try:
                 r = requests.get(link)
