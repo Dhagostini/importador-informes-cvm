@@ -37,7 +37,7 @@ if st.button("🔍 Buscar e processar informes"):
         df_filtrado = df_csv[
             (df_csv['CNPJ_FUNDO'].str.replace(r'\D', '', regex=True) == cnpj_clean) &
             (df_csv['TP_DOC'].str.contains("Informe Mensal", case=False, na=False)) &
-            (df_csv['LINK_DOCUMENTO'].str.endswith(".xml", na=False))
+            (df_csv['LINK_ARQ'].str.endswith(".xml", na=False))
         ]
 
     if df_filtrado.empty:
